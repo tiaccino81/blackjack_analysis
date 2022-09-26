@@ -1,0 +1,101 @@
+---
+title: "Blackjack Hand Analysis"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+###### In this notebook, we attempt to recreate what is commonly known as "Basic Strategy" in blackjack.   
+###### Basic strategy is a chart that recommends the best move (hit or stand) for each possible hand.  
+###### The data used in this program can be derived from blackjack_hand_generator, which simulates a user-specified number of hands, and records various metrics about the hand, including the result, in csv files (stand.csv & hit.csv).    
+  
+  
+```{r include=FALSE}
+install.packages('dplyr')
+library('dplyr')
+
+install.packages("ggplot2")
+library("ggplot2")
+```
+
+
+
+First, we must import the hand data, which is obtained using blackjack_hand_generator.py  
+Here, we can see various metrics pertaining to each hand, including the players/dealers cards and totals, as well as the result of the hand:
+```{r}
+stand_hands = read.csv('stand.csv')
+hit_hands = read.csv('hit.csv')
+
+head(stand_hands)
+head(hit_hands)
+```
+
+Next, we will filter the hands according to the result (W/L), so that we can determine the win percentage for each possible hand
+```{r}
+stands_won = filter(stand_hands, Result == 'W')
+stands_lost = filter(stand_hands, Result == 'L')
+
+hits_won = filter(hit_hands, Result == 'W')
+hits_lost = filter(hit_hands, Result == 'L')
+
+stands_won
+stands_lost
+hits_won
+hits_lost
+```
+
+
+```{r}
+
+```
+
+
+
+Next, we create frequency tables for all hands played where the player stands, as well as a table for all of our standing wins.   
+We can divide the 'win table' by the 'all_hands' table to derive a 'win percentage table'. 
+```{r}
+stand_hands = subset(stand_hands, Player_Total != 21)
+stands_won = subset(stands_won, Player_Total != 21)
+all_stand = table(stand_hands$Player_Total, stand_hands$DC1)
+all_stand
+
+stand_w = table(stands_won$Player_Total, stands_won$DC1)
+stand_w 
+
+stand_win_pct = round(((stand_w / all_stand) * 100), 2)
+stand_win_pct
+```
+
+Next, we will repeat the same process with the hands where the player hits  
+We can eliminate instances where the players total exceeds 21, because these hands automatically result in a loss.  
+We will also eliminate instances of a player total of 2 so that we can have conformable matrices for our final pct table calculation. It is also inherently obvious that we should always hit in these instances because the dealer will always beat a player total of 2. 
+```{r}
+
+hit_hands = subset(hit_hands, player_open_total != 21)
+#hit_hands[hit_hands$player_open_total !=2, ]
+
+all_hit = table(hit_hands$player_open_total, hit_hands$DC1)
+
+all_hit
+
+hit_w = table(hits_won$player_open_total, hits_won$DC1)
+hit_w 
+
+hit_win_pct = round(((hit_w / all_hit) * 100), 2)
+hit_win_pct
+
+```
+
+```{r}
+hit_win_pct
+stand_win_pct
+
+final <- ifelse(hit_win_pct < stand_win_pct, yes = 'S', no = 'H')
+final
+```
+
+```{r}
+test = filter(stand_hands, DC1 == 1)
+test
+```
+
